@@ -1,0 +1,327 @@
+{
+  "name": "Tugas 5 - Ghiyadhika - Modul ( 7 ) -  Implementasi AI Keuangan - PERINGKAS BERITA KEUANGAN HARIAN",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 7
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -192,
+        64
+      ],
+      "id": "6061acab-df55-496e-bc24-c2acd7fb5afd",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        224,
+        80
+      ],
+      "id": "832d0cb8-5cd2-4872-89f0-ca5f3528ea3f",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Berikut adalah data teks dari artikel berita keuangan: {{ $json.text }}. Tolong abaikan semua teks navigasi, menu login, atau cookie. Fokuslah hanya pada isi beritanya, lalu ringkas menjadi 5 poin utama yang informatif.",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        608,
+        352
+      ],
+      "id": "4b002225-370b-4932-bab5-b87a7dd70b46",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "chatId": "5701993759",
+        "text": "={{ $json.text }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        944,
+        352
+      ],
+      "id": "8e6e69ad-df72-4e8d-8c47-fb4c4f6c1443",
+      "name": "Send a text message",
+      "webhookId": "ae9e360c-6e09-4eb6-96d2-5a2974046798",
+      "credentials": {
+        "telegramApi": {
+          "id": "iHhuo0IrSpXaEYSm",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://www.cnbcindonesia.com/market/rss",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        16,
+        64
+      ],
+      "id": "8ce491b7-cc56-41df-965c-f2a4c4256e4c",
+      "name": "CNBC INDONESIA"
+    },
+    {
+      "parameters": {
+        "url": "https://finance.detik.com/rss",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        16,
+        224
+      ],
+      "id": "536030d3-2ed1-40e3-af73-de3fb03c4119",
+      "name": "FINANCE DETIK"
+    },
+    {
+      "parameters": {
+        "maxItems": 10
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        432,
+        80
+      ],
+      "id": "ff30de5e-19ec-480d-9fb0-13bedf086059",
+      "name": "LIMIT 10"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.link }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        640,
+        80
+      ],
+      "id": "fae34688-72dd-4962-9baa-c34e54077c9e",
+      "name": "UNDUH HALAMAN WEB"
+    },
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "text",
+              "cssSelector": "body"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        224,
+        352
+      ],
+      "id": "7a871759-03d5-45ec-b919-14fec4521b76",
+      "name": "CLEAN CODE & EKSTRAK"
+    },
+    {
+      "parameters": {
+        "fieldsToAggregate": {
+          "fieldToAggregate": [
+            {
+              "fieldToAggregate": "text"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        400,
+        352
+      ],
+      "id": "86e9d17a-b524-4e25-94e8-f5537bf457c3",
+      "name": "GABUNG JADI 1 BLOK"
+    },
+    {
+      "parameters": {
+        "model": "xiaomi/mimo-v2-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        608,
+        528
+      ],
+      "id": "6bffd3ee-5f20-4c6e-a78b-3d5d12c37ee3",
+      "name": "OpenRouter Chat Model1",
+      "credentials": {
+        "openRouterApi": {
+          "id": "2j8B6sTmCQLaXBDp",
+          "name": "OpenRouter account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "CNBC INDONESIA",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "FINANCE DETIK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "LIMIT 10",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CNBC INDONESIA": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FINANCE DETIK": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "LIMIT 10": {
+      "main": [
+        [
+          {
+            "node": "UNDUH HALAMAN WEB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "UNDUH HALAMAN WEB": {
+      "main": [
+        [
+          {
+            "node": "CLEAN CODE & EKSTRAK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CLEAN CODE & EKSTRAK": {
+      "main": [
+        [
+          {
+            "node": "GABUNG JADI 1 BLOK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GABUNG JADI 1 BLOK": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "0ed0485b-e1e0-4100-89e6-3ed43d4afbc1",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "32c0ef153f7930e565ad160435282be5c9c56963458788d102e98ccae3c60878"
+  },
+  "id": "VH2AFK75MRaNvKyL",
+  "tags": []
+}
